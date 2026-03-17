@@ -255,7 +255,7 @@
     }
 
     function deleteStudent(id) {
-        if(confirm("ఈ స్టూడెంట్ రికార్డ్ డిలీట్ చేయమంటారా?")) {
+        if(confirm("deleting data")) {
             db = db.filter(s => s.id !== id);
             save();
         }

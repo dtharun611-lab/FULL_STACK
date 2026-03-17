@@ -1,1 +1,351 @@
 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance OS | Pro Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --student-theme: #0ea5e9;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+        }
+
+        * { box-sizing: border-box; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #f1f5f9;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        nav {
+            background: white;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .mode-toggle {
+            background: #f1f5f9;
+            padding: 5px;
+            border-radius: 12px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .mode-btn {
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            background: transparent;
+            color: #64748b;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .activity-view {
+            display: none;
+            padding: 40px;
+            max-width: 1300px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .activity-view.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .teacher-layout { display: grid; grid-template-columns: 320px 1fr; gap: 30px; }
+        .sidebar-card { background: white; padding: 25px; border-radius: 20px; border: 1px solid #e2e8f0; height: fit-content; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        
+        .student-lookup {
+            max-width: 550px;
+            margin: 40px auto;
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        .input-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; margin-bottom: 5px; font-size: 0.8rem; font-weight: 700; color: #64748b; }
+        input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; outline: none; font-family: inherit; }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+
+        .btn-primary { 
+            width: 100%; padding: 14px; background: var(--primary); color: white; 
+            border: none; border-radius: 10px; font-weight: 700; cursor: pointer; 
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: var(--danger);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        .btn-delete:hover { background: var(--danger); color: white; }
+
+        .period-dot {
+            width: 32px; height: 32px; border-radius: 8px; border: 2px solid #e2e8f0;
+            display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer; font-weight: 800; font-size: 0.7rem;
+        }
+        .p-p { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .p-a { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+
+        .result-card {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 20px;
+            background: #f8fafc;
+            display: none;
+            text-align: left;
+            border: 1px solid #e2e8f0;
+        }
+
+        .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th { background: #f8fafc; padding: 15px; text-align: left; font-size: 0.75rem; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; }
+
+        .subject-row {
+            padding: 15px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .subject-row:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div style="font-weight: 800; color: var(--primary); font-size: 1.2rem;">Attendance OS</div>
+    <div class="mode-toggle">
+        <button class="mode-btn active" onclick="switchMode('teacher')">Teacher Portal</button>
+        <button class="mode-btn" onclick="switchMode('student')">Student View</button>
+    </div>
+</nav>
+
+<div id="teacherView" class="activity-view active">
+    <div class="teacher-layout">
+        <div class="sidebar-card">
+            <h3 style="margin-top: 0; color: var(--primary);">Admin Controls</h3>
+            <div class="input-group">
+                <label>Student Name</label>
+                <input type="text" id="tName" placeholder="Full Name">
+            </div>
+            <div class="input-group">
+                <label>Roll Number</label>
+                <input type="text" id="tRoll" placeholder="Ex: 101">
+            </div>
+            <div class="input-group">
+                <label>Subject / Session</label>
+                <input type="text" id="tSubCustom" placeholder="Ex: Subject">
+            </div>
+            <button class="btn-primary" onclick="addStudent()">Add Student Entry</button>
+            <p style="font-size: 0.7rem; color: #94a3b8; margin-top: 15px; line-height: 1.4;">
+               
+            </p>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student Info</th>
+                        <th>Subject</th>
+                        <th style="text-align:center">P1</th><th style="text-align:center">P2</th>
+                        <th style="text-align:center">P3</th><th style="text-align:center">P4</th>
+                        <th style="text-align:center">P5</th><th style="text-align:center">P6</th>
+                        <th>Today %</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="teacherTable"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="studentView" class="activity-view">
+    <div class="student-lookup">
+        <div style="font-size: 3rem; margin-bottom: 10px;">📊</div>
+        <h2 style="margin: 0;">Multi-Subject Report</h2>
+        <p style="color: #64748b; margin-bottom: 30px;">check your Attendance by entering your roll no.</p>
+        
+        <div class="input-group">
+            <input type="text" id="searchRoll" placeholder="Roll Number (e.g., 101)" style="text-align: center; font-size: 1.2rem;">
+        </div>
+        <button class="btn-primary" style="background: var(--student-theme);" onclick="checkAttendance()">Check My Progress</button>
+
+        <div id="studentResult" class="result-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div>
+                    <h3 id="resName" style="margin: 0; color: var(--student-theme); font-size: 1.4rem;">Student Name</h3>
+                    <p id="resRollLabel" style="margin: 5px 0 0 0; font-size: 0.8rem; color: #94a3b8; font-weight: 700;"></p>
+                </div>
+                <div style="text-align: right;">
+                    <small style="color: #94a3b8; font-weight: 700;">OVERALL STATUS</small>
+                    <div id="overallStatusLabel" style="font-weight: 800; color: var(--primary);">Active</div>
+                </div>
+            </div>
+            
+            <div id="resPeriodsArea">
+                </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let db = JSON.parse(localStorage.getItem("proAttendanceDB")) || [];
+
+    function switchMode(mode) {
+        document.querySelectorAll('.activity-view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        
+        if(mode === 'teacher') {
+            document.getElementById('teacherView').classList.add('active');
+            document.querySelector('.mode-btn:nth-child(1)').classList.add('active');
+        } else {
+            document.getElementById('studentView').classList.add('active');
+            document.querySelector('.mode-btn:nth-child(2)').classList.add('active');
+        }
+        renderTeacherTable();
+    }
+
+    function addStudent() {
+        const name = document.getElementById('tName').value.trim();
+        const roll = document.getElementById('tRoll').value.trim();
+        const sub = document.getElementById('tSubCustom').value.trim();
+
+        if(!name || !roll || !sub) return alert("Please fill all fields!");
+
+        db.push({
+            id: Date.now(),
+            name, roll, sub,
+            periods: ['none', 'none', 'none', 'none', 'none', 'none']
+        });
+        
+        save();
+        document.getElementById('tName').value = '';
+        document.getElementById('tRoll').value = '';
+        document.getElementById('tSubCustom').value = '';
+    }
+
+    function deleteStudent(id) {
+        if(confirm("ఈ స్టూడెంట్ రికార్డ్ డిలీట్ చేయమంటారా?")) {
+            db = db.filter(s => s.id !== id);
+            save();
+        }
+    }
+
+    function toggle(id, idx) {
+        const s = db.find(item => item.id === id);
+        const states = ['none', 'P', 'A'];
+        let current = states.indexOf(s.periods[idx]);
+        s.periods[idx] = states[(current + 1) % 3];
+        save();
+    }
+
+    function save() {
+        localStorage.setItem("proAttendanceDB", JSON.stringify(db));
+        renderTeacherTable();
+    }
+
+    function renderTeacherTable() {
+        const body = document.getElementById('teacherTable');
+        body.innerHTML = db.map(s => {
+            const marked = s.periods.filter(p => p !== 'none');
+            const pCount = s.periods.filter(p => p === 'P').length;
+            const pct = marked.length === 0 ? 0 : Math.round((pCount / marked.length) * 100);
+
+            return `
+                <tr>
+                    <td><b>${s.name}</b><br><small style="color:#94a3b8">Roll: ${s.roll}</small></td>
+                    <td><span style="background:#eef2ff; color:var(--primary); padding:4px 8px; border-radius:6px; font-size:0.75rem; font-weight:700;">${s.sub}</span></td>
+                    ${s.periods.map((p, i) => `
+                        <td style="text-align:center">
+                            <div onclick="toggle(${s.id}, ${i})" class="period-dot p-${p.toLowerCase()}">${p === 'none' ? '-' : p}</div>
+                        </td>
+                    `).join('')}
+                    <td><b style="color:${pct >= 75 ? '#22c55e' : '#ef4444'}">${pct}%</b></td>
+                    <td>
+                        <button class="btn-delete" onclick="deleteStudent(${s.id})">Delete</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // UPDATED STUDENT LOGIC FOR MULTIPLE SUBJECTS
+    function checkAttendance() {
+        const roll = document.getElementById('searchRoll').value.trim();
+        const resultDiv = document.getElementById('studentResult');
+        const resArea = document.getElementById('resPeriodsArea');
+        
+        const studentEntries = db.filter(s => s.roll === roll);
+
+        if(studentEntries.length === 0) {
+            alert("No records found for this Roll Number!");
+            resultDiv.style.display = 'none';
+            return;
+        }
+
+        resultDiv.style.display = 'block';
+        document.getElementById('resName').innerText = studentEntries[0].name;
+        document.getElementById('resRollLabel').innerText = "ROLL ID: " + roll;
+
+        let reportHTML = "";
+        studentEntries.forEach(student => {
+            const marked = student.periods.filter(p => p !== 'none');
+            const pCount = student.periods.filter(p => p === 'P').length;
+            const pct = marked.length === 0 ? 0 : Math.round((pCount / marked.length) * 100);
+            const statusColor = pct >= 75 ? '#22c55e' : '#ef4444';
+
+            reportHTML += `
+                <div class="subject-row">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-weight:700; color:#1e293b; font-size:0.95rem;">${student.sub}</span>
+                        <span style="font-weight:800; color:${statusColor}">${pct}%</span>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        ${student.periods.map((p, i) => `
+                            <div class="period-dot p-${p.toLowerCase()}" style="cursor:default; width:28px; height:28px; font-size:0.6rem;">
+                                ${p === 'none' ? '-' : p}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+
+        resArea.innerHTML = reportHTML;
+    }
+
+    renderTeacherTable();
+</script>
+
+</body>
+</html>
